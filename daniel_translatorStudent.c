@@ -20,16 +20,25 @@ int main() {
     printf("Unable to fork\n");
     exit(-1);
   }
-  if (status == 0) {     /* (translator) son process */
-     close(my_pipe[0]);
-      write(my_pipe[1], "Hello", 6 * sizeof(char));
-      exit(0);
+  if (status == 0)
+  { /* (translator) son process */
+    char word[100];
+    printf("Enter English Word: ");
+    if (!scanf("%s", word))
+    {
+      printf("Input Error!");
+      exit(EXIT_FAILURE);
     }
+    close(my_pipe[0]);
+    write(my_pipe[1], word, 100 * sizeof(char));
+    fflush(stdout);
+    exit(0);
+  }
     else {    /* (student) father process */
 
       wait(&status);    /* wait until son process finishes */
      close(my_pipe[1]);
-      read(my_pipe[0], father_buff, 6);
+      read(my_pipe[0], father_buff, 100);
       printf("Got from pipe: %s\n", father_buff);
       exit(0);
     }
