@@ -1,1 +1,1 @@
-gcc -pthread daniel_translatorStudent.c -o test
+gcc -pthread daniel_translatorStudent.c -o daniel_translatorStudent
