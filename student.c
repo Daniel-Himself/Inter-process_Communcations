@@ -6,14 +6,12 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <unistd.h>
-#define FIFO_WT "fifo_wt"
-#define FIFO_RT "fifo_rt"
+#define FIFO_WT "fifo_wt" // the fifo that the student reads from
+#define FIFO_RT "fifo_rt" // the fifo that the student writes to
 #define STR_LEN 100
 
 int main(int argc, char *argv[])
 {
-    /*might need this*/
-    // char *cptr = NULL, exitstr = {"exit"};
     /* 1. open reader and writer fifo recpectively*/
     char word[STR_LEN];
     FILE *fdw;
@@ -26,6 +24,7 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
+    // create a fifo for the student to read from
     if (mkfifo(FIFO_WT, 0666 | O_RDONLY) == -1 && errno != EEXIST)
     {
         perror("cannot create fifo file");
@@ -59,23 +58,4 @@ int main(int argc, char *argv[])
     unlink(FIFO_RT);
     unlink(FIFO_WT);
     return EXIT_SUCCESS;
-
-    /* 3. when receiving messege show translation*/
-
-    // END
-
-    /**
-     *     //    <<first we make our fifo file>> <<errno == EEXIST if fifo already exists>>
-    if (mkfifo(FIFO_RT, 0666 | O_RDONLY) == -1 && errno != EEXIST)
-    {
-        perror("cannot create fifo file");
-        exit(EXIT_FAILURE);
-    }
-    // open fifo>>
-    if (!(fdw = fopen(FIFO_RT, "w")))
-    {
-        perror("cannot open fifo file for w");
-        exit(EXIT_FAILURE);
-    }
-    */
 }

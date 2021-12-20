@@ -1,2 +1,4 @@
-gcc daniel_translator.c -o translator
-gcc daniel_student.c -o student
+gcc translator.c -o translator -pthread
+gcc student.c -o student
+gcc translatorStudent.c -o translatorstudent
+clear
