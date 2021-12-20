@@ -19,11 +19,16 @@ int main(int argc, char *argv[])
     FILE *fdw;
     FILE *fdr;
 
-
     /*write*/
     if (!(fdr = fopen(FIFO_RT, "w")))
     {
         perror("cannot open fifo file for w");
+        exit(EXIT_FAILURE);
+    }
+
+    if (mkfifo(FIFO_WT, 0666 | O_RDONLY) == -1 && errno != EEXIST)
+    {
+        perror("cannot create fifo file");
         exit(EXIT_FAILURE);
     }
 
@@ -34,16 +39,20 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    puts("Enter English Word: ");
     /* 2. recive strings from user until receiving "exit" */
-    while (fgets(word, STR_LEN, stdin) != NULL)
+    while (1)
     {
-        fprintf(fdr, " %s\n", word);
-        fflush(fdr); // <== important
-        fscanf(fdw, " %s", word);
-        fflush(fdw);
-        printf("The word in German: %s\n", word);
-        if(strcmp(word,"bye")==0) break;
+        printf("Enter English Word: ");
+        if (fgets(word, STR_LEN, stdin) != NULL)
+        {
+            fprintf(fdr, " %s\n", word);
+            fflush(fdr); // <== important
+            fscanf(fdw, " %s", word);
+            fflush(fdw);
+            printf("The word in German: %s\n", word);
+            if (strcmp(word, "Bye") == 0)
+                break;
+        }
     }
     fclose(fdw);
     fclose(fdr);

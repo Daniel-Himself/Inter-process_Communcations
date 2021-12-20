@@ -6,8 +6,8 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <unistd.h>
-#define FIFO_WRITE_T "fifo_wt"
-#define FIFO_READ_T "fifo_rt"
+#define FIFO_WT "fifo_wt"
+#define FIFO_RT "fifo_rt"
 #define STR_LEN 100
 
 int main(int argc, char *argv[])
@@ -16,32 +16,48 @@ int main(int argc, char *argv[])
     // char *cptr = NULL, exitstr = {"exit"};
     /* 1. open reader and writer fifo recpectively*/
     char word[STR_LEN];
-    FILE *descriptor_write;
-    FILE *descriptor_read;
-
+    FILE *fdw;
+    FILE *fdr;
 
     /*write*/
-    if (!(descriptor_read = fopen(FIFO_WRITE_T, "w")))
+    if (!(fdr = fopen(FIFO_RT, "w")))
     {
         perror("cannot open fifo file for w");
         exit(EXIT_FAILURE);
     }
 
-    printf("******************\n");
-    puts("Enter English Word: ");
-    /* 2. recive strings from user until receiving "exit" */
-    while (fgets(word, STR_LEN, stdin) != NULL)
+    if (mkfifo(FIFO_WT, 0666 | O_RDONLY) == -1 && errno != EEXIST)
     {
-        fprintf(descriptor_read, " %s\n", word);
-        fflush(descriptor_read); // <== important
-        fscanf(descriptor_write, " %s", word);
-        fflush(descriptor_write);
-        printf("The word in German: %s\n", word);
+        perror("cannot create fifo file");
+        exit(EXIT_FAILURE);
     }
-    fclose(descriptor_write);
-    fclose(descriptor_read);
-    unlink(FIFO_READ_T);
-    unlink(FIFO_WRITE_T);
+
+    /*read*/
+    if (!(fdw = fopen(FIFO_WT, "r")))
+    {
+        perror("cannot open fifo file for r");
+        exit(EXIT_FAILURE);
+    }
+
+    /* 2. recive strings from user until receiving "exit" */
+    while (1)
+    {
+        printf("Enter English Word: ");
+        if (fgets(word, STR_LEN, stdin) != NULL)
+        {
+            fprintf(fdr, " %s\n", word);
+            fflush(fdr); // <== important
+            fscanf(fdw, " %s", word);
+            fflush(fdw);
+            printf("The word in German: %s\n", word);
+            if (strcmp(word, "Bye") == 0)
+                break;
+        }
+    }
+    fclose(fdw);
+    fclose(fdr);
+    unlink(FIFO_RT);
+    unlink(FIFO_WT);
     return EXIT_SUCCESS;
 
     /* 3. when receiving messege show translation*/
@@ -50,13 +66,13 @@ int main(int argc, char *argv[])
 
     /**
      *     //    <<first we make our fifo file>> <<errno == EEXIST if fifo already exists>>
-    if (mkfifo(FIFO_READ_T, 0666 | O_RDONLY) == -1 && errno != EEXIST)
+    if (mkfifo(FIFO_RT, 0666 | O_RDONLY) == -1 && errno != EEXIST)
     {
         perror("cannot create fifo file");
         exit(EXIT_FAILURE);
     }
     // open fifo>>
-    if (!(descriptor_write = fopen(FIFO_READ_T, "w")))
+    if (!(fdw = fopen(FIFO_RT, "w")))
     {
         perror("cannot open fifo file for w");
         exit(EXIT_FAILURE);

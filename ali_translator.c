@@ -6,25 +6,26 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <pthread.h> // thread functionality
 #define FIFO_WT "fifo_wt"
 #define FIFO_RT "fifo_rt"
 #define STR_LEN 100
 
-void translateToGerman(char *wordPtr);
+void* translateToGerman(void * args);
 
-int main(int argc, char *argv[])
-{
   /*creat twofifos -if needed-*/
   char word[STR_LEN];
   FILE *fdr;
   FILE *fdw;
 
-  /**
-     * 0666 read only
- * 0644 write only */
+int main(int argc, char *argv[])
+{
+  pthread_t thread_data;
+  int status;
+
 
   /*make fifo to read from student*/
-  if (mkfifo(FIFO_RT, 0666 | O_RDONLY) == -1 && errno != EEXIST)
+  if (mkfifo(FIFO_RT, 0777 | O_RDONLY) == -1 && errno != EEXIST)
   {
     perror("cannot create fifo file");
     exit(EXIT_FAILURE);
@@ -38,7 +39,7 @@ int main(int argc, char *argv[])
   }
 
   /*make fifo to read from student`*/
-  if (mkfifo(FIFO_WT, S_IFIFO | 0666) == -1 && errno != EEXIST)
+  if (mkfifo(FIFO_WT, S_IFIFO | 0777) == -1 && errno != EEXIST)
   {
     perror("cannot create fifo file");
     exit(EXIT_FAILURE);
@@ -53,10 +54,16 @@ int main(int argc, char *argv[])
   /*wait for in-coming requests from student-s-*/
   while (fscanf(fdr, " %s", word) != EOF)
   {
-    translateToGerman(word);
-    fprintf(fdw, " %s\n", word);
-    fflush(fdw); // <== important
-    // read from fifo
+    status = pthread_create(&thread_data, NULL, translateToGerman, (void *)&word); // create thread
+    if (status != 0)
+    {
+      fputs("pthread_create failed in main", stderr);
+      exit(EXIT_FAILURE);
+    }
+    //ranslateToGerman(word); for a version without threads
+    // fprintf(fdw, " %s\n", word);
+    // fflush(fdw); // <== important
+    // // read from fifo
   }
 
   fclose(fdw);
@@ -72,8 +79,13 @@ int main(int argc, char *argv[])
   /*join thrid*/
   //
 }
-void translateToGerman(char *wordPtr)
+
+void* translateToGerman(void * args)
 {
+  char* wordPtr = (char*) args;
+
+  //printf("%s\n", wordPtr); //test
+
   char *word1 = {"hallo"};
   char *word2 = {"Schmetterling"};
   char *word3 = {"danke"};
@@ -106,5 +118,11 @@ void translateToGerman(char *wordPtr)
     strcpy(wordPtr, word6);
   }
   else
-    strcpy(wordPtr, "Unrecognized word, try again");
+    strcpy(wordPtr, "Unrecognized");
+
+  //printf("%s\n", wordPtr); //test
+
+  fprintf(fdw, " %s\n", word);
+  fflush(fdw); // <== important
+  // read from fifo
 }

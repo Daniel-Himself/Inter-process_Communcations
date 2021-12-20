@@ -6,65 +6,60 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <unistd.h>
-#define FIFO_WRITE_T "fifo_wt"
-#define FIFO_READ_T "fifo_rt"
+#define FIFO_WT "fifo_wt"
+#define FIFO_RT "fifo_rt"
 #define STR_LEN 100
 
-void traslateToGerman(char *wordPtr);
+void translateToGerman(char *wordPtr);
 
 int main(int argc, char *argv[])
 {
   /*creat twofifos -if needed-*/
   char word[STR_LEN];
-  FILE *descriptor_read;
-  FILE *descriptor_write;
-
-  /**
-     * 0666 read only
- * 0644 write only */
-
-  printf("******************");
+  FILE *fdr;
+  FILE *fdw;
 
   /*make fifo to read from student*/
-  if (mknod(FIFO_READ_T, S_IFIFO | 0666, 0) == -1 && errno != EEXIST)
+  if (mkfifo(FIFO_RT, 0777 | O_RDONLY) == -1 && errno != EEXIST)
   {
     perror("cannot create fifo file");
     exit(EXIT_FAILURE);
   }
 
   /*read*/
-  if (!(descriptor_read = fopen(FIFO_READ_T, "r")))
+  if (!(fdr = fopen(FIFO_RT, "r")))
   {
     perror("cannot open fifo file for r");
     exit(EXIT_FAILURE);
   }
 
   /*make fifo to read from student`*/
-  if (mknod(FIFO_WRITE_T, S_IFIFO | 0666, 0) == -1 && errno != EEXIST)
+  if (mkfifo(FIFO_WT, S_IFIFO | 0777) == -1 && errno != EEXIST)
   {
     perror("cannot create fifo file");
     exit(EXIT_FAILURE);
   }
   /*write*/
-  if (!(descriptor_write = fopen(FIFO_WRITE_T, "w")))
+  if (!(fdw = fopen(FIFO_WT, "w")))
   {
     perror("cannot open fifo file for w");
     exit(EXIT_FAILURE);
   }
 
   /*wait for in-coming requests from student-s-*/
-  while (fscanf(descriptor_read, " %s", word) != EOF && strcmp(word, "exit") != 0)
+  while (fscanf(fdr, " %s", word) != EOF)
   {
-    printf("******************");
-    traslateToGerman(word);
-    fprintf(descriptor_write, " %s\n", word);
-    fflush(descriptor_write); // <== important
-                              // read from fifo
+    translateToGerman(word);
+    fprintf(fdw, " %s\n", word);
+    fflush(fdw); // <== important
+    // read from fifo
   }
-  fclose(descriptor_write);
-  fclose(descriptor_read);
-  unlink(FIFO_READ_T);
-  unlink(FIFO_WRITE_T);
+
+  fclose(fdw);
+  fclose(fdr);
+  unlink(FIFO_RT);
+  unlink(FIFO_WT);
+  return EXIT_SUCCESS;
   /*create thread to read request*/
 
   // when getting exit:
@@ -73,7 +68,7 @@ int main(int argc, char *argv[])
   /*join thrid*/
   //
 }
-void traslateToGerman(char *wordPtr)
+void translateToGerman(char *wordPtr)
 {
   char *word1 = {"hallo"};
   char *word2 = {"Schmetterling"};
@@ -107,5 +102,5 @@ void traslateToGerman(char *wordPtr)
     strcpy(wordPtr, word6);
   }
   else
-    strcpy(wordPtr, "Unrecognized word, try again");
+    strcpy(wordPtr, "Unrecognized");
 }
