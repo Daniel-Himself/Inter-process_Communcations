@@ -15,7 +15,6 @@ int main(int argc, char *argv[])
 {
   int fd1[2]; // stores two ends of first pipe parent
   int fd2[2]; // stores two ends of second pipe son
-  // char word[STR_LEN];
 
   pid_t status;
 
@@ -45,7 +44,7 @@ int main(int argc, char *argv[])
     // Parent process (student)
     else if (status > 0)
     {
-      char word[100];
+      char word[STR_LEN];
 
       printf("Enter English Word: ");
       if (!scanf("%s", word))
@@ -86,6 +85,7 @@ int main(int argc, char *argv[])
   }
 }
 
+// method to translate the word
 void traslateToGerman(char *wordPtr)
 {
   char *word1 = {"hallo"};
