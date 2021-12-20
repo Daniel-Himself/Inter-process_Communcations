@@ -19,36 +19,22 @@ int main(int argc, char *argv[])
     FILE *fdw;
     FILE *fdr;
 
-    // /*make fifo to read from translator*/
-    // if (mkfifo(FIFO_WT, S_IFIFO | 0666) == -1 && errno != EEXIST)
-    // {
-    //     perror("cannot create fifo file");
-    //     exit(EXIT_FAILURE);
-    // }
-
-    /*read*/
-    if (!(fdw = fopen(FIFO_RT, "r")))
-    {
-        perror("cannot open fifo file for r");
-        exit(EXIT_FAILURE);
-    }
-
-    // /*make fifo to write to traslator*/
-    // if (mkfifo(FIFO_RT, 0666 | O_RDONLY) == -1 && errno != EEXIST)
-    // {
-    //     perror("cannot create fifo file");
-    //     exit(EXIT_FAILURE);
-    // }
 
     /*write*/
-    if (!(fdr = fopen(FIFO_WT, "w")))
+    if (!(fdr = fopen(FIFO_RT, "w")))
     {
         perror("cannot open fifo file for w");
         exit(EXIT_FAILURE);
     }
 
-    printf("******************");
-    puts("Standing by for Translator...\n");
+    /*read*/
+    if (!(fdw = fopen(FIFO_WT, "r")))
+    {
+        perror("cannot open fifo file for r");
+        exit(EXIT_FAILURE);
+    }
+
+    puts("Enter English Word: ");
     /* 2. recive strings from user until receiving "exit" */
     while (fgets(word, STR_LEN, stdin) != NULL)
     {
@@ -57,6 +43,7 @@ int main(int argc, char *argv[])
         fscanf(fdw, " %s", word);
         fflush(fdw);
         printf("The word in German: %s\n", word);
+        if(strcmp(word,"bye")==0) break;
     }
     fclose(fdw);
     fclose(fdr);

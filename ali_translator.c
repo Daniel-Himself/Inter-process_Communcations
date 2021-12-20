@@ -10,70 +10,69 @@
 #define FIFO_RT "fifo_rt"
 #define STR_LEN 100
 
-void traslateToGerman(char *wordPtr);
+void translateToGerman(char *wordPtr);
 
 int main(int argc, char *argv[])
 {
-    /*creat twofifos -if needed-*/
-    char word[STR_LEN];
-    FILE *fdr;
-    FILE *fdw;
+  /*creat twofifos -if needed-*/
+  char word[STR_LEN];
+  FILE *fdr;
+  FILE *fdw;
 
-    /**
+  /**
      * 0666 read only
  * 0644 write only */
 
-    printf("******************");
+  /*make fifo to read from student*/
+  if (mkfifo(FIFO_RT, 0666 | O_RDONLY) == -1 && errno != EEXIST)
+  {
+    perror("cannot create fifo file");
+    exit(EXIT_FAILURE);
+  }
 
-    /*make fifo to read from student*/
-    if (mkfifo(FIFO_RT, 0666 | O_RDONLY) == -1 && errno != EEXIST)
-    {
-        perror("cannot create fifo file");
-        exit(EXIT_FAILURE);
-    }
+  /*read*/
+  if (!(fdr = fopen(FIFO_RT, "r")))
+  {
+    perror("cannot open fifo file for r");
+    exit(EXIT_FAILURE);
+  }
 
-    /*read*/
-    if (!(fdr = fopen(FIFO_RT, "r")))
-    {
-        perror("cannot open fifo file for r");
-        exit(EXIT_FAILURE);
-    }
+  /*make fifo to read from student`*/
+  if (mkfifo(FIFO_WT, S_IFIFO | 0666) == -1 && errno != EEXIST)
+  {
+    perror("cannot create fifo file");
+    exit(EXIT_FAILURE);
+  }
+  /*write*/
+  if (!(fdw = fopen(FIFO_WT, "w")))
+  {
+    perror("cannot open fifo file for w");
+    exit(EXIT_FAILURE);
+  }
 
-    /*make fifo to read from student`*/
-    if (mkfifo(FIFO_WT, S_IFIFO | 0644) == -1 && errno != EEXIST)
-    {
-        perror("cannot create fifo file");
-        exit(EXIT_FAILURE);
-    }
-    /*write*/
-    if (!(fdw = fopen(FIFO_WT, "w")))
-    {
-        perror("cannot open fifo file for w");
-        exit(EXIT_FAILURE);
-    }
+  /*wait for in-coming requests from student-s-*/
+  while (fscanf(fdr, " %s", word) != EOF)
+  {
+    translateToGerman(word);
+    fprintf(fdw, " %s\n", word);
+    fflush(fdw); // <== important
+    // read from fifo
+  }
 
-    /*wait for in-coming requests from student-s-*/
-    while (fscanf(fdr, " %s", word) != EOF && strcmp(word, "exit") != 0)
-    {
-        printf("******************");
-        traslateToGerman(word);
-        fprintf(fdw, " %s\n", word);
-		fflush(fdw); // <== important
-        // read from fifo
-    }
-    fclose(fdw);
-    fclose(fdr);
-    unlink(FIFO_RT);
-    unlink(FIFO_WT);
-    /*create thread to read request*/
+  fclose(fdw);
+  fclose(fdr);
+  unlink(FIFO_RT);
+  unlink(FIFO_WT);
+  return EXIT_SUCCESS;
+  /*create thread to read request*/
 
-    // when getting exit:
-    /*print bye*/
+  // when getting exit:
+  /*print bye*/
 
-    /*join thrid*/
-    //
+  /*join thrid*/
+  //
 }
-void traslateToGerman(char *wordPtr)
+void translateToGerman(char *wordPtr)
 {
   char *word1 = {"hallo"};
   char *word2 = {"Schmetterling"};
